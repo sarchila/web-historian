@@ -3,11 +3,9 @@ var path = require('path');
 
 exports.readUrls = function(filePath, cb){
   fileText = "";
-  fs.readFile(filePath,function(err, fileContents){
-    fileText += fileContents;
-    console.log(filePath, fileText.split('\n'));
-    // console.log(JSON.parse(fileContents));
-    cb(fileText.split('\n'));
+  fs.readFile(filePath, function(err, fileContents){
+    var urlArray = String(fileContents).split('\n');
+    cb(urlArray);
   });
 };
 
