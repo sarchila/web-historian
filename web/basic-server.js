@@ -4,18 +4,15 @@ var handler = require("./request-handler");
 var port = 8080;
 var ip = "127.0.0.1";
 
-var router = {
-  '/': handler.handleRequest
-};
-
 var server = http.createServer(function(req, res){
   var path = req.url;
-  if (router[path]) {
-    router[path](req, res);
+  if (path === '/') {
+    handler.handleRequest(req, res);
   } else {
-    // 404
+    handler.handlePages(req, res);
   }
 });
+
 console.log("Listening on http://" + ip + ":" + port);
 server.listen(port, ip);
 
