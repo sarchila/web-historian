@@ -4,11 +4,7 @@ var httpHelpers = require('./http-helpers');
 module.exports.datadir = path.join(__dirname, "../data/sites.txt"); // tests will need to override this.
 var statusCode = 404;
 
-var webpage;
-
-var text;
-
-webpage = String(fs.readFileSync('./web/index.html'));
+var webpage, text;
 
 var sendFinalResponse = function (req, res){
   res.writeHead(statusCode, httpHelpers.headers);
@@ -16,6 +12,7 @@ var sendFinalResponse = function (req, res){
 };
 
 var sendData = function (req, res){
+  webpage = String(fs.readFileSync('./web/index.html'));
   statusCode = 200;
   sendFinalResponse(req, res);
 };
@@ -65,6 +62,7 @@ module.exports.handlePages = function (req, res) {
     if (err) {
       console.log("Couldn't find file");
       statusCode = 404;
+      webpage = String(fs.readFileSync('./web/index.html'));
       sendFinalResponse(req, res);
     } else {
       statusCode = 200;
