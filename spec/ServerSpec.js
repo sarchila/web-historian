@@ -6,6 +6,7 @@ var res;
 
 // allows us to run tests async
 function async(cb){
+  waits(1000);
   runs(cb);
 }
 
@@ -29,7 +30,7 @@ describe("Node Server Request Listener Function", function() {
   it("Should answer GET requests for archived websites", function(done) {
     var fixtureName = "www.google.com";
     var req = new stubs.Request("/" + fixtureName, "GET");
-    handler.handleRequest(req, res);
+    handler.handlePages(req, res);
     async(function(){
       expect(res._responseCode).toEqual(200);
       expect(res._data).toMatch(/google/); // the resulting html should have the text "google"
