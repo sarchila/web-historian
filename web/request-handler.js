@@ -6,7 +6,7 @@ var statusCode = 404;
 
 var webpage;
 
-var text = String(fs.readFileSync(module.exports.datadir));
+var text;
 
 webpage = String(fs.readFileSync('./web/index.html'));
 
@@ -21,6 +21,7 @@ var sendData = function (req, res){
 };
 
 var saveData = function(req, res){
+  text = String(fs.readFileSync(module.exports.datadir));
   var body = "";
 
   req.on('data', function(chunk){
@@ -28,9 +29,11 @@ var saveData = function(req, res){
   });
 
   req.on('end', function(){
-    text += "\n" + body;
-    statusCode = 302;
-    sendFinalResponse(req, res);
+    text += String(body).slice(4) + "\n";
+    fs.writeFile(module.exports.datadir, text, function(){
+      statusCode = 302;
+      sendFinalResponse(req, res);
+    });
   });
 };
 
