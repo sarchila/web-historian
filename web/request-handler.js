@@ -5,11 +5,8 @@ module.exports.datadir = path.join(__dirname, "../data/sites.txt"); // tests wil
 var statusCode = 404;
 
 var webpage;
-var text = "";
 
-fs.readFile(module.exports.datadir, function(err, fileContents){
-  text += fileContents;
-});
+var text = String(fs.readFileSync(module.exports.datadir));
 
 webpage = String(fs.readFileSync('./web/index.html'));
 
@@ -25,13 +22,14 @@ var sendData = function (req, res){
 
 var saveData = function(req, res){
   var body = "";
+
   req.on('data', function(chunk){
     body += chunk;
   });
+
   req.on('end', function(){
     text += "\n" + body;
-    statusCode = 201;
-    console.log(text);
+    statusCode = 302;
     sendFinalResponse(req, res);
   });
 };
@@ -59,8 +57,6 @@ module.exports.handleRequest = function (req, res) {
 module.exports.handlePages = function (req, res) {
   console.log("Received " + req.method + " request at URL " + req.url);
   var filePath = './data/sites' + req.url;
-
-  // webpage = String(fs.readFileSync(filePath));
 
   fs.readFile(filePath, function (err, fileContents) {
     if (err) {
