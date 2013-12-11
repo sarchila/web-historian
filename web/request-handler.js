@@ -5,6 +5,18 @@ module.exports.datadir = path.join(__dirname, "../data/sites.txt"); // tests wil
 var statusCode = 404;
 
 var webpage, text;
+var sitesUrls = {};
+
+
+var parseSitesFile = function () {
+  var sitesUrlsList = String(fs.readFileSync(module.exports.datadir)).split('\n');
+  sitesUrlsList.pop();
+  sitesUrlsList.forEach(function (eachUrl) {
+    sitesUrls[eachUrl] = true;
+  });
+};
+
+parseSitesFile();
 
 var sendFinalResponse = function (req, res){
   res.writeHead(statusCode, httpHelpers.headers);
@@ -12,12 +24,13 @@ var sendFinalResponse = function (req, res){
 };
 
 var sendData = function (req, res){
-  webpage = String(fs.readFileSync('./web/index.html'));
+  webpage = String(fs.readFileSync('./web/public/index.html'));
   statusCode = 200;
   sendFinalResponse(req, res);
 };
 
 var saveData = function(req, res){
+
   text = String(fs.readFileSync(module.exports.datadir));
   var body = "";
 
@@ -26,11 +39,20 @@ var saveData = function(req, res){
   });
 
   req.on('end', function(){
-    text += String(body).slice(4) + "\n";
-    fs.writeFile(module.exports.datadir, text, function(){
+    var userUrl = String(body).slice(4);
+
+    if (sitesUrls[userUrl]){
       statusCode = 302;
-      sendFinalResponse(req, res);
-    });
+      res.writeHead(statusCode, {Location: userUrl});
+      res.end();
+    } else {
+      text += userUrl + "\n";
+      sitesUrls[userUrl] = true;
+      fs.writeFile(module.exports.datadir, text, function(){
+        statusCode = 302;
+        sendFinalResponse(req, res);
+      });
+    }
   });
 };
 
@@ -49,7 +71,8 @@ module.exports.handleRequest = function (req, res) {
   console.log("Received " + req.method + " request at URL " + req.url);
   if (verbs[req.method]){
     verbs[req.method](req, res);
-  } else{
+  } else {
+    statusCode = 405;
     sendFinalResponse(req, res);
   }
 };
@@ -57,14 +80,14 @@ module.exports.handleRequest = function (req, res) {
 module.exports.handlePages = function (req, res) {
   console.log("Received " + req.method + " request at URL " + req.url);
   var filePath = './data/sites' + req.url;
-
   fs.readFile(filePath, function (err, fileContents) {
     if (err) {
-      console.log("Couldn't find file");
+      // error retrieving page
       statusCode = 404;
-      webpage = String(fs.readFileSync('./web/index.html'));
+      webpage = String(fs.readFileSync('./web/public/index.html'));
       sendFinalResponse(req, res);
     } else {
+      // success
       statusCode = 200;
       webpage = String(fileContents);
       sendFinalResponse(req, res);
