@@ -62,6 +62,8 @@ describe("html fetcher helpers", function(){
       });
     });
 
+    // write test to see if file in sites folder contains the site's HTML
+
   });
 
 
