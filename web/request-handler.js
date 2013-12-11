@@ -2,9 +2,8 @@ var path = require('path');
 var fs = require('fs');
 var httpHelpers = require('./http-helpers');
 module.exports.datadir = path.join(__dirname, "../data/sites.txt"); // tests will need to override this.
-var statusCode = 404;
 
-var webpage, text;
+var text;
 var sitesUrls = {};
 
 
@@ -18,15 +17,14 @@ var parseSitesFile = function () {
 
 parseSitesFile();
 
-var sendFinalResponse = function (req, res){
-  res.writeHead(statusCode, httpHelpers.headers);
-  res.end(webpage);
+var sendFinalResponse = function (req, res, statusCode, headers, body){
+  res.writeHead(statusCode, headers);
+  res.end(body);
 };
 
 var sendData = function (req, res){
-  webpage = String(fs.readFileSync('./web/public/index.html'));
-  statusCode = 200;
-  sendFinalResponse(req, res);
+  var webpage = String(fs.readFileSync('./web/public/index.html'));
+  sendFinalResponse(req, res, 200, httpHelpers.headers, webpage);
 };
 
 var saveData = function(req, res){
@@ -42,23 +40,19 @@ var saveData = function(req, res){
     var userUrl = String(body).slice(4);
 
     if (sitesUrls[userUrl]){
-      statusCode = 302;
-      res.writeHead(statusCode, {Location: userUrl});
-      res.end();
+      sendFinalResponse(req, res, 302, {Location: userUrl}, null);
     } else {
       text += userUrl + "\n";
       sitesUrls[userUrl] = true;
       fs.writeFile(module.exports.datadir, text, function(){
-        statusCode = 302;
-        sendFinalResponse(req, res);
+        sendFinalResponse(req, res, 302, {Location: userUrl}, null);
       });
     }
   });
 };
 
 var sendOptions = function(req, res){
-  statusCode = 200;
-  sendFinalResponse(req, res);
+  sendFinalResponse(req, res, 200, httpHelpers.headers, null);
 };
 
 var verbs = {
@@ -67,34 +61,51 @@ var verbs = {
   'OPTIONS': sendOptions
 };
 
-module.exports.handleRequest = function (req, res) {
+module.exports.handleRoot = function (req, res) {
   console.log("Received " + req.method + " request at URL " + req.url);
   if (verbs[req.method]){
     verbs[req.method](req, res);
   } else {
-    statusCode = 405;
-    sendFinalResponse(req, res);
+    sendFinalResponse(req, res, 405, httpHelpers.headers, null);
   }
 };
 
-module.exports.handlePages = function (req, res) {
+module.exports.handleCachedPages = function (req, res) {
   console.log("Received " + req.method + " request at URL " + req.url);
+
   var filePath = './data/sites' + req.url;
+  setResponseBody(req, res, filePath);
+
+  // if req.url is in the obj
+  //   respond with cached page
+  // else
+  //   if url exists in /web/public
+  //     respond with static asset
+  //   else
+  //     add it to obj and sites.txt
+
+};
+
+module.exports.handleStaticAssets = function (req, res) {
+  console.log("Received " + req.method + " request at URL " + req.url);
+
+  var filePath = './web' + req.url;
+  setResponseBody(req, res, filePath);
+};
+
+
+var setResponseBody = function (req, res, filePath) {
   fs.readFile(filePath, function (err, fileContents) {
     if (err) {
       // error retrieving page
-      statusCode = 404;
-      webpage = String(fs.readFileSync('./web/public/index.html'));
-      sendFinalResponse(req, res);
+      sendFinalResponse(req, res, 404, httpHelpers.headers, null);
     } else {
       // success
-      statusCode = 200;
-      webpage = String(fileContents);
-      sendFinalResponse(req, res);
+      var webpage = String(fileContents);
+      sendFinalResponse(req, res, 200, httpHelpers.headers, webpage);
     }
   });
 };
-
 
 
 
