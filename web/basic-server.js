@@ -7,9 +7,11 @@ var ip = "127.0.0.1";
 var server = http.createServer(function(req, res){
   var path = req.url;
   if (path === '/') {
-    handler.handleRequest(req, res);
+    handler.handleRoot(req, res);
+  } else if (path.slice(0,7) === '/public') {
+    handler.handleStaticAssets(req, res);
   } else {
-    handler.handlePages(req, res);
+    handler.handleCachedPages(req, res);
   }
 });
 
